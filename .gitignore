@@ -1,0 +1,19 @@
+# macOS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# build / dependency folders (khi làm app)
+node_modules/
+target/
+build/
+dist/
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# thông tin nhạy cảm: KHÔNG commit
+.env
+*.env
+*.log
