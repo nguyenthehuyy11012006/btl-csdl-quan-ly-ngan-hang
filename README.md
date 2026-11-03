@@ -8,11 +8,11 @@ Bài tập lớn môn Cơ sở dữ liệu (MySQL). Repo gồm:
 
 ## Thành viên nhóm
 
-| Họ tên | MSSV | Phụ trách |
-|--------|------|-----------|
-|  |        |           |
-|        |      |           |
-|        |      |           |
+| Họ tên         | MSSV       | Phụ trách |
+|----------------|------------|-----------|
+|Nguyễn Thế Huy  |B24DCCN284  |           |
+|                |            |           |
+|                |            |           |
 
 ## Cấu trúc thư mục
 
