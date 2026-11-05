@@ -24,6 +24,7 @@ Bài tập lớn môn Cơ sở dữ liệu (MySQL). Repo gồm:
 ├── docs/
 │   ├── EER_quan_ly_ngan_hang.png      # sơ đồ EER (ảnh)
 │   └── EER_quan_ly_ngan_hang.pdf      # sơ đồ EER (PDF)
+│   └── BTL_CSDL_YeuCau1.pdf           # file PDF Yêu cầu 1
 └── app/                               # ứng dụng (sẽ bổ sung)
 ```
 
