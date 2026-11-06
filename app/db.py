@@ -69,3 +69,9 @@ def call(proc, args=()):
         while cur.nextset():
             pass
         return rows
+
+
+def execute(sql, params=None):
+    """Chạy INSERT/UPDATE/DELETE; trả về số dòng bị ảnh hưởng."""
+    with _cursor() as cur:
+        return cur.execute(sql, params)
