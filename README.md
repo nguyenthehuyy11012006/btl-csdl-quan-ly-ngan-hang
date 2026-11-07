@@ -97,3 +97,7 @@ Build kiểm tra TypeScript và tạo giao diện production. Các thao tác ghi
 - Git lưu mã nguồn, không lưu các bản ghi MySQL được tạo khi chạy ứng dụng.
 - Các file `.env` bị bỏ qua bởi `.gitignore`; không commit mật khẩu.
 - Muốn nhiều người cùng thấy dữ liệu, cấu hình FHBank kết nối đến cùng một MySQL server; push code lên Git không đồng bộ database.
+
+## Ứng dụng Streamlit (bản cũ)
+
+Hướng dẫn cài đặt và chạy bản web Streamlit: xem [app/README.md](app/README.md).
