@@ -4,14 +4,14 @@
 
 ## Thành viên nhóm
 
-| Họ tên | MSSV | Phụ trách |
-|---|---|---|
-| | | |
-| | | |
-| | | |
-
+| Họ tên | MSSV |
+|---|---|
+| Nguyễn Thế Huy | B24DCCN284 |
+| Nguyễn Trí Hiếu | B24DCCN218 |
+| Nguyễn Văn Hưng | B24DCCN262 |
+| Bùi Thanh Hùng | B24DCCN251 |
 ## Chức năng
-
+xq
 - Tra cứu hồ sơ khách hàng và tài khoản.
 - Mở tài khoản tín dụng và gửi tiền; ghi chi tiêu và thanh toán tín dụng.
 - Xem dư nợ, tiền gửi, lịch sử giao dịch và giao dịch theo khoảng ngày.
