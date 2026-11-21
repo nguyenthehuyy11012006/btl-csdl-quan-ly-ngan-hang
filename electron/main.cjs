@@ -75,6 +75,31 @@ async function searchCustomers(_event, term = '') {
   }
 }
 
+async function createCustomer(_event, input = {}) {
+  const cmt = String(input.CMT || '').trim()
+  const name = String(input.Ten || '').trim()
+  const birthDate = input.NgaySinh
+  const address = String(input.DiaChi || '').trim()
+  const city = String(input.ThanhPho || '').trim()
+  if (!/^\d{9,12}$/.test(cmt)) throw new Error('CMT/CCCD cần gồm 9 đến 12 chữ số.')
+  if (!name || name.length > 100 || !address || address.length > 255 || !city || city.length > 50) throw new Error('Vui lòng nhập đầy đủ họ tên, địa chỉ và thành phố.')
+  if (!validDate(birthDate)) throw new Error('Ngày sinh không hợp lệ.')
+
+  const connection = await mysql.createConnection(loadDatabaseConfig())
+  try {
+    const [[next]] = await connection.execute("SELECT COALESCE(MAX(CAST(SUBSTRING(MaKH, 3) AS UNSIGNED)), 0) + 1 AS NextId FROM KhachHang WHERE MaKH REGEXP '^KH[0-9]+$'")
+    const customerId = `KH${String(next.NextId).padStart(3, '0')}`
+    await connection.execute('INSERT INTO KhachHang (MaKH, CMT, Ten, NgaySinh, DiaChi, ThanhPho) VALUES (?, ?, ?, ?, ?, ?)', [customerId, cmt, name, birthDate, address, city])
+    return { success: true, customerId }
+  } catch (error) {
+    if (error && typeof error === 'object' && error.code === 'ER_DUP_ENTRY') throw new Error('CMT/CCCD này đã được sử dụng.')
+    if (error instanceof Error && !error.code) throw error
+    throw new Error('Không tạo được khách hàng. Vui lòng kiểm tra dữ liệu và kết nối cơ sở dữ liệu.')
+  } finally {
+    await connection.end().catch(() => {})
+  }
+}
+
 async function getCustomerAccounts(_event, customerId) {
   const id = String(customerId || '').trim().slice(0, 10)
   if (!id) throw new Error('Invalid customer id.')
@@ -574,6 +599,7 @@ app.whenReady().then(() => {
   ipcMain.handle('database:check', checkDatabaseConnection)
   ipcMain.handle('customers:search', searchCustomers)
   ipcMain.handle('customers:accounts', getCustomerAccounts)
+  ipcMain.handle('customers:create', createCustomer)
   ipcMain.handle('accounts:opening-options', getAccountOpeningOptions)
   ipcMain.handle('accounts:open', openAccount)
   ipcMain.handle('transactions:entry-options', getTransactionEntryOptions)

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { RefreshCw, ShieldCheck, ShieldOff } from 'lucide-react'
+import ActionErrorDialog from '../components/ActionErrorDialog'
 
 type Tab = 'eligible' | 'frozen' | 'active'
 const kinds: Record<string, string> = { TinDung: 'Tín dụng', GuiTien: 'Gửi tiền' }
@@ -15,6 +16,7 @@ export default function AccountFreezePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [actionError, setActionError] = useState('')
   const [notice, setNotice] = useState('')
   const [retry, setRetry] = useState(0)
   const refresh = async () => {
@@ -33,27 +35,29 @@ export default function AccountFreezePage() {
   const selectedRow = rows.find((row) => row.MaTK === selected)
   const updateStatus = async (action: 'freeze' | 'unfreeze') => {
     if (!selectedRow) return
-    setSaving(true); setError(''); setNotice('')
+    setSaving(true); setError(''); setActionError(''); setNotice('')
     try {
       await window.fhbank!.accountAdmin.changeStatus({ action, accountId: selectedRow.MaTK })
       setNotice(action === 'freeze' ? `Đã đóng băng tài khoản ${selectedRow.MaTK}.` : `Đã mở băng tài khoản ${selectedRow.MaTK}.`)
       setConfirm(false); setBulkConfirm(false); await refresh()
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Không thay đổi được trạng thái tài khoản.') }
+    } catch (reason) { setActionError(reason instanceof Error ? reason.message : 'Không thay đổi được trạng thái tài khoản.') }
     finally { setSaving(false) }
   }
   const bulkFreeze = async () => {
-    setSaving(true); setError(''); setNotice('')
+    setSaving(true); setError(''); setActionError(''); setNotice('')
     try {
       const result = await window.fhbank!.accountAdmin.changeStatus({ action: 'freeze-inactive', months })
       setNotice(`Đã đóng băng ${result.affected ?? 0} tài khoản không hoạt động từ ${months} tháng.`)
       setBulkConfirm(false); await refresh()
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Không đóng băng được các tài khoản đủ điều kiện.') }
+    } catch (reason) { setActionError(reason instanceof Error ? reason.message : 'Không đóng băng được các tài khoản đủ điều kiện.') }
     finally { setSaving(false) }
   }
 
   return <div className="page-content report-page">
     <div className="page-heading-row"><div><p className="eyebrow">FHBANK · KIỂM SOÁT TÀI KHOẢN</p><h1>Đóng băng tài khoản</h1><p className="page-subtitle">Theo dõi hoạt động và thay đổi trạng thái qua stored procedure.</p></div><button className="refresh-button" onClick={() => setRetry((n) => n + 1)} disabled={loading}><RefreshCw size={15} className={loading ? 'spin-icon' : ''}/>Làm mới</button></div>
-    {error && <div className="customer-error"><strong>Chưa thể hoàn tất</strong><span>{error}</span></div>}{notice && <div className="account-success"><ShieldCheck size={17}/><span>{notice}</span></div>}
+    {error && <div className="customer-error"><strong>Chưa thể tải dữ liệu</strong><span>{error}</span></div>}
+    {actionError && <ActionErrorDialog message={actionError} onClose={() => setActionError('')} />}
+    {notice && <ActionErrorDialog variant="success" message={notice} onClose={() => setNotice('')} />}
     <section className="glass-card freeze-controls"><label><span>Không hoạt động từ</span><input type="number" min="1" max="60" value={months} onChange={(e) => setMonths(Math.min(60, Math.max(1, Number(e.target.value) || 1)))}/><span>tháng</span></label><div className="report-tabs"><button className={tab === 'eligible' ? 'active' : ''} onClick={() => { setTab('eligible'); setConfirm(false) }}>Đủ điều kiện ({data?.eligible.length ?? 0})</button><button className={tab === 'frozen' ? 'active' : ''} onClick={() => { setTab('frozen'); setConfirm(false) }}>Đang đóng băng ({data?.frozen.length ?? 0})</button><button className={tab === 'active' ? 'active' : ''} onClick={() => { setTab('active'); setConfirm(false) }}>Tài khoản hoạt động ({data?.active.length ?? 0})</button></div></section>
     <section className="glass-card freeze-board"><div className="report-table-heading"><div><span className="income-board-icon"><ShieldCheck size={17}/></span><div><h2>{tab === 'eligible' ? 'Tài khoản đủ điều kiện đóng băng' : tab === 'frozen' ? 'Tài khoản đang đóng băng' : 'Tất cả tài khoản đang hoạt động'}</h2><p>Hoạt động gần nhất hoặc ngày tạo nếu chưa có giao dịch.</p></div></div>{tab === 'eligible' && rows.length > 0 && <button className="freeze-action danger" onClick={() => setBulkConfirm((v) => !v)} disabled={saving}><ShieldOff size={14}/>Đóng băng đủ điều kiện</button>}</div>
       {bulkConfirm && <div className="freeze-confirm"><strong>Xác nhận đóng băng hàng loạt?</strong><span>Stored procedure sẽ đóng băng tất cả tài khoản đang hoạt động đã không có giao dịch từ {months} tháng. Tài khoản đủ điều kiện: {data?.eligible.length ?? 0}.</span><div><button onClick={() => setBulkConfirm(false)}>Hủy</button><button onClick={() => void bulkFreeze()} disabled={saving}>{saving ? 'Đang xử lý…' : 'Xác nhận đóng băng'}</button></div></div>}

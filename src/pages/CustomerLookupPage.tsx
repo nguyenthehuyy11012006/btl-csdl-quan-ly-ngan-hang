@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { Banknote, CalendarDays, CreditCard, MapPin, Search, UserRound, Users, Wallet } from 'lucide-react'
+import { Banknote, CalendarDays, CreditCard, MapPin, Plus, Save, Search, UserRound, Users, Wallet } from 'lucide-react'
+import ActionErrorDialog from '../components/ActionErrorDialog'
 
 function formatDate(value: string | Date | undefined) {
   if (!value) return '—'
@@ -27,6 +28,11 @@ export default function CustomerLookupPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [error, setError] = useState('')
   const [detailError, setDetailError] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [savingCustomer, setSavingCustomer] = useState(false)
+  const [createError, setCreateError] = useState('')
+  const [createSuccess, setCreateSuccess] = useState('')
+  const [customerForm, setCustomerForm] = useState({ CMT: '', Ten: '', NgaySinh: '1995-01-01', DiaChi: '', ThanhPho: '' })
 
   useEffect(() => {
     let cancelled = false
@@ -85,6 +91,30 @@ export default function CustomerLookupPage() {
     setRetry((value) => value + 1)
   }
 
+  async function createCustomer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!window.fhbank) return setCreateError('Hãy mở FHBank bằng ứng dụng desktop để tạo khách hàng.')
+    setSavingCustomer(true)
+    setCreateError('')
+    try {
+      const result = await window.fhbank.customers.create(customerForm)
+      setAdding(false)
+      setCreateSuccess(`Đã tạo khách hàng ${result.customerId}.`)
+      setCustomerForm({ CMT: '', Ten: '', NgaySinh: '1995-01-01', DiaChi: '', ThanhPho: '' })
+      setTerm(result.customerId)
+      setSubmittedTerm(result.customerId)
+      setRetry((value) => value + 1)
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : 'Không tạo được khách hàng.'
+      const cleanMessage = message.includes('CMT/CCCD này đã được sử dụng.')
+        ? 'CMT/CCCD này đã được sử dụng.'
+        : message.replace(/^Error invoking remote method ['"][^'"]+['"]:\s*Error:\s*/, '')
+      setCreateError(cleanMessage)
+    } finally {
+      setSavingCustomer(false)
+    }
+  }
+
   return (
     <div className="page-content customer-page">
       <div className="page-heading-row">
@@ -95,6 +125,8 @@ export default function CustomerLookupPage() {
         </div>
         <div className="customer-total"><Users size={17} /><span>{loading ? 'Đang tải…' : `${customers.length} hồ sơ`}</span></div>
       </div>
+      {createError && <ActionErrorDialog title="Không thể tạo khách hàng" message={createError} onClose={() => setCreateError('')} />}
+      {createSuccess && <ActionErrorDialog variant="success" message={createSuccess} onClose={() => setCreateSuccess('')} />}
 
       <div className="customer-workspace">
         <section className="customer-list-card glass-card">
@@ -104,6 +136,7 @@ export default function CustomerLookupPage() {
             <input value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Nhập thông tin cần tìm…" aria-label="Tìm khách hàng" />
             <button type="submit" aria-label="Tìm kiếm"><Search size={16} /></button>
           </form>
+          <button className="customer-create-button" type="button" onClick={() => { setAdding(true); setCreateError(''); setCreateSuccess('') }}><Plus size={16} />Thêm khách hàng mới</button>
           {error && <div className="customer-error"><strong>Chưa tải được dữ liệu</strong><span>{error}</span><button onClick={() => setRetry((value) => value + 1)}>Thử kết nối lại</button></div>}
           {loading && <div className="customer-list-empty">Đang tải danh sách khách hàng…</div>}
           {!loading && !error && customers.length === 0 && <div className="customer-list-empty">Không tìm thấy khách hàng phù hợp.</div>}
@@ -122,10 +155,21 @@ export default function CustomerLookupPage() {
         </section>
 
         <section className="customer-detail-card glass-card">
-          {!selected && !loading && !error && <div className="customer-detail-empty"><span className="customer-detail-icon"><Users size={22} /></span><h2>Chọn một khách hàng</h2><p>Thông tin hồ sơ và tài khoản sẽ hiển thị tại đây.</p></div>}
-          {loading && <div className="customer-detail-empty"><span className="customer-detail-icon"><Search size={22} /></span><h2>Đang tìm hồ sơ</h2><p>Vui lòng chờ trong giây lát.</p></div>}
-          {error && <div className="customer-detail-empty"><span className="customer-detail-icon"><Users size={22} /></span><h2>Chưa có dữ liệu để hiển thị</h2><p>Kết nối MySQL để xem hồ sơ khách hàng.</p></div>}
-          {selected && (
+          {adding && <form className="customer-create-form" onSubmit={(event) => void createCustomer(event)}>
+            <div className="customer-panel-heading"><div><h2>Thêm khách hàng</h2><p>Nhập thông tin hồ sơ mới. Mã khách hàng được tạo tự động.</p></div><span className="customer-panel-icon"><UserRound size={17} /></span></div>
+            <div className="customer-create-fields">
+              <label className="account-field"><span>Số CMT/CCCD</span><input required inputMode="numeric" maxLength={12} pattern="[0-9]{9,12}" value={customerForm.CMT} onChange={(event) => setCustomerForm({ ...customerForm, CMT: event.target.value })} /></label>
+              <label className="account-field"><span>Họ và tên</span><input required maxLength={100} value={customerForm.Ten} onChange={(event) => setCustomerForm({ ...customerForm, Ten: event.target.value })} /></label>
+              <label className="account-field"><span>Ngày sinh</span><input required type="date" value={customerForm.NgaySinh} onChange={(event) => setCustomerForm({ ...customerForm, NgaySinh: event.target.value })} /></label>
+              <label className="account-field"><span>Thành phố</span><input required maxLength={50} value={customerForm.ThanhPho} onChange={(event) => setCustomerForm({ ...customerForm, ThanhPho: event.target.value })} /></label>
+              <label className="account-field customer-create-wide"><span>Địa chỉ</span><input required maxLength={255} value={customerForm.DiaChi} onChange={(event) => setCustomerForm({ ...customerForm, DiaChi: event.target.value })} /></label>
+            </div>
+            <div className="employee-form-actions"><button className="filter-submit account-submit" type="submit" disabled={savingCustomer}><Save size={14} />{savingCustomer ? 'Đang lưu…' : 'Tạo khách hàng'}</button><button className="employee-delete-button" type="button" onClick={() => { setAdding(false); setCreateError('') }}>Hủy</button></div>
+          </form>}
+          {!adding && !selected && !loading && !error && <div className="customer-detail-empty"><span className="customer-detail-icon"><Users size={22} /></span><h2>Chọn một khách hàng</h2><p>Thông tin hồ sơ và tài khoản sẽ hiển thị tại đây.</p></div>}
+          {!adding && loading && <div className="customer-detail-empty"><span className="customer-detail-icon"><Search size={22} /></span><h2>Đang tìm hồ sơ</h2><p>Vui lòng chờ trong giây lát.</p></div>}
+          {!adding && error && <div className="customer-detail-empty"><span className="customer-detail-icon"><Users size={22} /></span><h2>Chưa có dữ liệu để hiển thị</h2><p>Kết nối MySQL để xem hồ sơ khách hàng.</p></div>}
+          {!adding && selected && (
             <>
               <div className="customer-profile-heading"><span className="customer-profile-avatar"><UserRound size={23} /></span><div><p>HỒ SƠ KHÁCH HÀNG</p><h2>{selected.Ten}</h2><span>{selected.MaKH}</span></div><span className="customer-active-badge"><i /> Đang quản lý</span></div>
               <div className="customer-info-grid">

@@ -55,7 +55,7 @@ button:focus-visible { outline: 3px solid rgba(12, 155, 151, .35); outline-offse
 .workspace-pill { display: flex; align-items: center; gap: 9px; margin: 22px 2px 13px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 11px; color: var(--muted); background: var(--glass); font-size: 17.4px; font-weight: 600; }
 .workspace-pill svg { margin-left: auto; }
 .workspace-dot, .status-badge i { width: 7px; height: 7px; border-radius: 99px; background: #27b89b; box-shadow: 0 0 0 3px rgba(39, 184, 155, .12); }
-.sidebar-nav { min-height: 0; flex: 1; overflow: auto; overscroll-behavior: contain; padding: 1px 0 10px; scrollbar-width: thin; scrollbar-color: rgba(112, 156, 153, .2) transparent; }
+.sidebar-nav { min-height: 0; flex: 1; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 1px 0 10px; scrollbar-width: thin; scrollbar-color: rgba(112, 156, 153, .2) transparent; }
 .nav-group { margin: 11px 0 17px; }
 .nav-label { margin: 0 10px 7px; color: #96a6a6; font-size: 14.3px; font-weight: 750; letter-spacing: 1.13px; }
 .nav-items { display: grid; gap: 3px; }
@@ -190,6 +190,11 @@ h1, h2, h3, p { margin-top: 0; }
 :where(.main-area) .customer-search-form input { width: 100%; min-width: 0; height: 33px; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 14px; }
 .customer-search-form input::placeholder { color: #9caaaa; }
 .customer-search-form button { display: grid; width: 30px; height: 30px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 8px; color: #fff; background: var(--teal-dark); cursor: pointer; }
+.customer-create-button { display: flex; min-height: 36px; align-items: center; justify-content: center; gap: 7px; margin: 2px 0 10px; border: 1px solid rgba(10,137,136,.2); border-radius: 9px; color: var(--teal); background: rgba(10,137,136,.06); font-size: 13px; font-weight: 700; cursor: pointer; }
+.customer-create-button:hover { background: rgba(10,137,136,.12); }
+.customer-create-form { display: grid; align-content: start; gap: 14px; }
+.customer-create-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; }
+.customer-create-wide { grid-column: 1 / -1; }
 .customer-results { display: grid; gap: 4px; overflow: auto; padding-right: 2px; }
 .customer-result { display: flex; min-width: 0; align-items: center; gap: 9px; padding: 9px 8px; border: 1px solid transparent; border-radius: 10px; color: var(--ink); background: transparent; text-align: left; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
 .customer-result:hover { background: rgba(10, 137, 136, .055); }
@@ -311,3 +316,14 @@ h1, h2, h3, p { margin-top: 0; }
 .nav-item { font-size: 14.7px; }
 .sidebar-search input,
 .empty-search { font-size: 13.3px; }
+
+.action-error-overlay { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(8,18,24,.58); backdrop-filter: blur(3px); animation: employee-toast-in .18s ease-out; }
+.action-error-dialog { position: relative; display: grid; grid-template-columns: 20px minmax(0,1fr) 28px; align-items: start; gap: 11px; width: min(430px, calc(100vw - 32px)); padding: 15px; border: 1px solid rgba(204,104,111,.3); border-radius: 13px; color: #b75d65; background: var(--glass-strong, #fff); box-shadow: 0 24px 80px rgba(0,0,0,.32); }
+.action-error-dialog.success { border-color: rgba(39,184,155,.3); color: #27866e; }
+.action-error-dialog > svg { margin-top: 1px; }
+.action-error-dialog > div { display: grid; gap: 4px; min-width: 0; }
+.action-error-dialog strong { font-size: 14px; }
+.action-error-dialog span { overflow-wrap: anywhere; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.action-error-dialog button { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 7px; color: inherit; background: transparent; cursor: pointer; }
+.action-error-dialog button:hover { background: rgba(204,104,111,.1); }
+@keyframes employee-toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }

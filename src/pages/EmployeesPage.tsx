@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { BriefcaseBusiness, Plus, RefreshCw, Save, Trash2, UserRound } from 'lucide-react'
+import ActionErrorDialog from '../components/ActionErrorDialog'
 
 const positions = ['Kinh doanh', 'Giao dịch viên', 'Kế toán', 'Quản lý chi nhánh']
 const dateValue = (value: string | Date) => {
@@ -8,6 +9,12 @@ const dateValue = (value: string | Date) => {
 }
 
 const blank = (): EmployeeRecord => ({ MaNV: '', CMT: '', Ten: '', NgaySinh: '1995-01-01', DiaChi: '', BacNghe: 1, ThamNien: 0, ViTri: positions[0] })
+const employeeErrorMessage = (reason: unknown, fallback: string) => {
+  const message = reason instanceof Error ? reason.message : fallback
+  return message.includes('Mã nhân viên hoặc CMT đã được sử dụng.')
+    ? 'Mã nhân viên hoặc CMT đã được sử dụng.'
+    : message
+}
 
 export default function EmployeesPage() {
   const [rows, setRows] = useState<EmployeeRecord[]>([])
@@ -19,6 +26,7 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [actionError, setActionError] = useState('')
   const [notice, setNotice] = useState('')
 
   const load = async (keep = true) => {
@@ -42,29 +50,31 @@ export default function EmployeesPage() {
   const select = (row: EmployeeRecord) => { setCreating(false); setConfirmDelete(false); setForm({ ...row, NgaySinh: dateValue(row.NgaySinh) }); setError(''); setNotice('') }
 
   async function submit(event: FormEvent) {
-    event.preventDefault(); setError(''); setNotice('')
+    event.preventDefault(); setError(''); setActionError(''); setNotice('')
     setSaving(true)
     try {
       await window.fhbank!.employees.save({ action: creating ? 'create' : 'update', ...form, NgaySinh: dateValue(form.NgaySinh), BacNghe: Number(form.BacNghe), ThamNien: Number(form.ThamNien) })
       setNotice(creating ? `Đã thêm nhân viên ${form.MaNV}.` : `Đã cập nhật nhân viên ${form.MaNV}.`)
       setCreating(false)
       await load(false)
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Không lưu được nhân viên.') }
+    } catch (reason) { setActionError(employeeErrorMessage(reason, 'Không lưu được nhân viên.')) }
     finally { setSaving(false) }
   }
 
   async function remove() {
-    setError(''); setNotice(''); setSaving(true)
+    setError(''); setActionError(''); setNotice(''); setSaving(true)
     try {
       await window.fhbank!.employees.save({ action: 'delete', MaNV: form.MaNV })
       setNotice(`Đã xóa nhân viên ${form.MaNV}.`); setConfirmDelete(false); await load(false)
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Không xóa được nhân viên.') }
+    } catch (reason) { setActionError(employeeErrorMessage(reason, 'Không xóa được nhân viên.')) }
     finally { setSaving(false) }
   }
 
   return <div className="page-content report-page">
     <div className="page-heading-row"><div><p className="eyebrow">FHBANK · QUẢN TRỊ NHÂN SỰ</p><h1>Quản lý nhân viên</h1><p className="page-subtitle">Tra cứu hồ sơ, thêm mới và cập nhật nhân viên ngân hàng.</p></div><button className="refresh-button" onClick={() => void load()} disabled={loading}><RefreshCw size={15} className={loading ? 'spin-icon' : ''}/>Làm mới</button></div>
-    {error && <div className="customer-error"><strong>Chưa thể hoàn tất</strong><span>{error}</span></div>}{notice && <div className="account-success"><UserRound size={17}/><span>{notice}</span></div>}
+    {error && <div className="customer-error"><strong>Chưa thể hoàn tất</strong><span>{error}</span></div>}
+    {actionError && <ActionErrorDialog message={actionError} onClose={() => setActionError('')} />}
+    {notice && <ActionErrorDialog variant="success" message={notice} onClose={() => setNotice('')} />}
     <div className="employee-workspace">
       <section className="glass-card employee-list-card"><div className="customer-panel-heading"><div><h2>Danh sách nhân viên</h2><p>{rows.length} hồ sơ trong cơ sở dữ liệu</p></div><span className="customer-panel-icon"><BriefcaseBusiness size={17}/></span></div>
         <div className="employee-list-controls"><input placeholder="Tìm mã, tên hoặc CMT…" value={query} onChange={(e) => setQuery(e.target.value)}/><select value={filter} onChange={(e) => setFilter(e.target.value)}><option>Tất cả</option>{availablePositions.map((position) => <option key={position}>{position}</option>)}</select></div>

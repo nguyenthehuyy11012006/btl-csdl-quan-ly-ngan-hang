@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { BadgeCheck, Building2, CreditCard, RefreshCw, Wallet } from 'lucide-react'
+import { Building2, CreditCard, RefreshCw, Wallet } from 'lucide-react'
+import ActionErrorDialog from '../components/ActionErrorDialog'
 
 const money = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
 const today = () => {
@@ -29,6 +30,7 @@ export default function OpenAccountPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [actionError, setActionError] = useState('')
   const [success, setSuccess] = useState('')
 
   const refresh = async () => {
@@ -59,10 +61,10 @@ export default function OpenAccountPage() {
   const tooEarly = Boolean(customer && createdAt < dateInput(customer.NgayDangKy))
 
   async function submit(event: FormEvent) {
-    event.preventDefault(); setError(''); setSuccess('')
-    if (!options || !customerId || !employeeId) { setError('Cần có khách hàng và nhân viên kinh doanh trước khi mở tài khoản.'); return }
-    if (reachedLimit) { setError(`Khách hàng đã đạt giới hạn ${maximum} tài khoản ${type === 'credit' ? 'tín dụng' : 'gửi tiền'}.`); return }
-    if (tooEarly) { setError('Ngày mở tài khoản không thể trước ngày đăng ký khách hàng.'); return }
+    event.preventDefault(); setActionError(''); setError(''); setSuccess('')
+    if (!options || !customerId || !employeeId) { setActionError('Cần có khách hàng và nhân viên kinh doanh trước khi mở tài khoản.'); return }
+    if (reachedLimit) { setActionError(`Khách hàng đã đạt giới hạn ${maximum} tài khoản ${type === 'credit' ? 'tín dụng' : 'gửi tiền'}.`); return }
+    if (tooEarly) { setActionError('Ngày mở tài khoản không thể trước ngày đăng ký khách hàng.'); return }
     setSubmitting(true)
     try {
       const input: OpenAccountInput = type === 'credit'
@@ -71,14 +73,15 @@ export default function OpenAccountPage() {
       const result = await window.fhbank!.accounts.open(input)
       setSuccess(`Đã mở tài khoản ${result.accountId} cho khách hàng ${result.customerId}.`)
       await refresh()
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Không mở được tài khoản.') }
+    } catch (reason) { setActionError(reason instanceof Error ? reason.message : 'Không mở được tài khoản.') }
     finally { setSubmitting(false) }
   }
 
   return <div className="page-content report-page">
     <div className="page-heading-row"><div><p className="eyebrow">FHBANK · QUẢN LÝ TÀI KHOẢN</p><h1>Mở tài khoản</h1><p className="page-subtitle">Tạo tài khoản tín dụng hoặc gửi tiền theo quy trình nghiệp vụ hiện có.</p></div><button className="refresh-button" onClick={() => void refresh()} disabled={loading}><RefreshCw size={15} className={loading ? 'spin-icon' : ''} />Làm mới dữ liệu</button></div>
     {error && <div className="customer-error"><strong>Chưa thể hoàn tất</strong><span>{error}</span></div>}
-    {success && <div className="account-success"><BadgeCheck size={18}/><span>{success}</span></div>}
+    {actionError && <ActionErrorDialog message={actionError} onClose={() => setActionError('')} />}
+    {success && <ActionErrorDialog variant="success" message={success} onClose={() => setSuccess('')} />}
     {loading && !options ? <div className="glass-card account-loading">Đang tải danh sách khách hàng và nhân viên…</div> : <form className="account-opening-layout" onSubmit={(event) => void submit(event)}>
       <section className="glass-card account-form-card">
         <div className="customer-panel-heading"><div><h2>Thông tin tài khoản</h2><p>Chọn loại tài khoản và điền các thông tin mở mới.</p></div><span className="customer-panel-icon"><Building2 size={18}/></span></div>

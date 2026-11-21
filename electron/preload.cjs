@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('fhbank', {
   customers: {
     search: (term) => ipcRenderer.invoke('customers:search', term),
     accounts: (customerId) => ipcRenderer.invoke('customers:accounts', customerId),
+    create: (input) => ipcRenderer.invoke('customers:create', input),
   },
   accounts: {
     openingOptions: () => ipcRenderer.invoke('accounts:opening-options'),

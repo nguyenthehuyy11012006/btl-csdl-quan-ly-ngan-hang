@@ -14,6 +14,7 @@ declare global {
       customers: {
         search: (term: string) => Promise<CustomerRecord[]>
         accounts: (customerId: string) => Promise<CustomerAccounts>
+        create: (input: Omit<CustomerRecord, 'MaKH' | 'NgayDangKy'>) => Promise<{ success: true; customerId: string }>
       }
       accounts: {
         openingOptions: () => Promise<AccountOpeningOptions>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ArrowDownLeft, ArrowUpRight, RefreshCw, Wallet } from 'lucide-react'
+import ActionErrorDialog from '../components/ActionErrorDialog'
 
 const money = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
 
@@ -13,6 +14,7 @@ export default function TransactionEntryPage({ kind }: { kind: 'spending' | 'pay
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [actionError, setActionError] = useState('')
   const [notice, setNotice] = useState('')
 
   const load = async () => {
@@ -39,17 +41,17 @@ export default function TransactionEntryPage({ kind }: { kind: 'spending' | 'pay
   const value = Number(amount)
 
   async function submit(event: FormEvent) {
-    event.preventDefault(); setError(''); setNotice('')
-    if (!selectedCredit || (kind === 'payment' && !selectedDeposit)) { setError('Không có đủ tài khoản đang hoạt động để thực hiện giao dịch.'); return }
-    if (!Number.isSafeInteger(value) || value <= 0) { setError('Số tiền phải là số nguyên dương.'); return }
-    if (kind === 'spending' && value > Number(selectedCredit.ConLai)) { setError('Số tiền vượt hạn mức còn lại của tài khoản tín dụng.'); return }
-    if (kind === 'payment' && value > Number(selectedDeposit?.SoDu)) { setError('Số tiền vượt số dư tài khoản gửi tiền.'); return }
+    event.preventDefault(); setError(''); setActionError(''); setNotice('')
+    if (!selectedCredit || (kind === 'payment' && !selectedDeposit)) { setActionError('Không có đủ tài khoản đang hoạt động để thực hiện giao dịch.'); return }
+    if (!Number.isSafeInteger(value) || value <= 0) { setActionError('Số tiền phải là số nguyên dương.'); return }
+    if (kind === 'spending' && value > Number(selectedCredit.ConLai)) { setActionError('Số tiền vượt hạn mức còn lại của tài khoản tín dụng.'); return }
+    if (kind === 'payment' && value > Number(selectedDeposit?.SoDu)) { setActionError('Số tiền vượt số dư tài khoản gửi tiền.'); return }
     setSaving(true)
     try {
       const result = await window.fhbank!.transactions.record({ kind, customerId, employeeId, creditAccountId, amount: value, ...(kind === 'payment' ? { depositAccountId } : {}) })
       setNotice(kind === 'spending' ? `Đã ghi chi tiêu ${money.format(result.amount)} ₫ lên ${result.creditAccountId}.` : `Đã ghi thanh toán ${money.format(result.amount)} ₫ từ ${result.depositAccountId} vào ${result.creditAccountId}.`)
       await load()
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Không ghi được giao dịch.') }
+    } catch (reason) { setActionError(reason instanceof Error ? reason.message : 'Không ghi được giao dịch.') }
     finally { setSaving(false) }
   }
 
@@ -58,7 +60,8 @@ export default function TransactionEntryPage({ kind }: { kind: 'spending' | 'pay
   return <div className="page-content report-page">
     <div className="page-heading-row"><div><p className="eyebrow">FHBANK · GIAO DỊCH</p><h1>{spending ? 'Ghi chi tiêu' : 'Thanh toán tín dụng'}</h1><p className="page-subtitle">{spending ? 'Ghi khoản chi lên tài khoản tín dụng của khách hàng.' : 'Thanh toán dư nợ bằng tài khoản gửi tiền của khách hàng.'}</p></div><button className="refresh-button" onClick={() => void load()} disabled={loading}><RefreshCw size={15} className={loading ? 'spin-icon' : ''}/>Làm mới dữ liệu</button></div>
     {error && <div className="customer-error"><strong>Chưa thể hoàn tất</strong><span>{error}</span></div>}
-    {notice && <div className="account-success"><Icon size={18}/><span>{notice}</span></div>}
+    {actionError && <ActionErrorDialog message={actionError} onClose={() => setActionError('')} />}
+    {notice && <ActionErrorDialog variant="success" message={notice} onClose={() => setNotice('')} />}
     <form className="transaction-entry-layout" onSubmit={(event) => void submit(event)}>
       <section className="glass-card account-form-card"><div className="customer-panel-heading"><div><h2>Thông tin giao dịch</h2><p>Kiểm tra chủ tài khoản, số dư và hạn mức trước khi ghi.</p></div><span className="customer-panel-icon"><Icon size={18}/></span></div>
         <div className="account-fields-grid transaction-fields">
