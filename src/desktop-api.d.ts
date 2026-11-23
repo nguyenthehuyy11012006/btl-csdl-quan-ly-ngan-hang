@@ -25,6 +25,7 @@ declare global {
       }
       deposits: {
         topCustomers: () => Promise<TopDepositCustomer[]>
+        record: (input: { customerId: string; employeeId: string; accountId: string; amount: number }) => Promise<{ success: true; customerId: string; accountId: string; amount: number }>
       }
       transactions: {
         entryOptions: () => Promise<TransactionEntryOptions>

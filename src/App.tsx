@@ -9,6 +9,7 @@ import EmployeeIncomePage from './pages/EmployeeIncomePage'
 import EmployeeRankingPage from './pages/EmployeeRankingPage'
 import OpenAccountPage from './pages/OpenAccountPage'
 import TransactionEntryPage from './pages/TransactionEntryPage'
+import DepositEntryPage from './pages/DepositEntryPage'
 import EmployeesPage from './pages/EmployeesPage'
 import LimitAlertsPage from './pages/LimitAlertsPage'
 import CustomerGrowthPage from './pages/CustomerGrowthPage'
@@ -53,6 +54,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { id: 'spending', label: 'Ghi chi tiêu', icon: ArrowUpRight, description: 'Ghi nhận chi tiêu trên tài khoản tín dụng' },
       { id: 'payments', label: 'Thanh toán tín dụng', icon: ArrowDownLeft, description: 'Thanh toán dư nợ từ tài khoản gửi tiền' },
+      { id: 'deposit', label: 'Gửi tiền vào tài khoản', icon: Banknote, description: 'Nộp thêm tiền vào tài khoản gửi tiền' },
       { id: 'history', label: 'Lịch sử giao dịch', icon: Activity, description: 'Tra cứu các giao dịch đã ghi nhận' },
       { id: 'daily-transactions', label: 'Giao dịch theo ngày', icon: CalendarDays, description: 'Thống kê giao dịch trong khoảng thời gian' },
     ],
@@ -156,7 +158,7 @@ function App() {
           </header>
 
           <div className="content-scroll">
-            {activeId === 'dashboard' ? <Dashboard onNavigate={setActiveId} /> : activeId === 'customers' ? <CustomerLookupPage /> : activeId === 'accounts' ? <OpenAccountPage /> : activeId === 'spending' ? <TransactionEntryPage kind="spending" /> : activeId === 'payments' ? <TransactionEntryPage kind="payment" /> : activeId === 'employees' ? <EmployeesPage /> : activeId === 'growth' ? <CustomerGrowthPage /> : activeId === 'cities' ? <CustomerCitiesPage /> : activeId === 'limit-alerts' ? <LimitAlertsPage /> : activeId === 'freeze' ? <AccountFreezePage /> : activeId === 'credit' ? <CreditAccountsPage /> : activeId === 'top-deposits' ? <TopDepositsPage /> : activeId === 'daily-transactions' ? <TransactionDatePage /> : activeId === 'history' ? <TransactionHistoryPage /> : activeId === 'debt-report' ? <SpendingDebtPage /> : activeId === 'employee-income' ? <EmployeeIncomePage /> : activeId === 'employee-ranking' ? <EmployeeRankingPage /> : <FeaturePlaceholder item={activeItem} />}
+            {activeId === 'dashboard' ? <Dashboard onNavigate={setActiveId} /> : activeId === 'customers' ? <CustomerLookupPage /> : activeId === 'accounts' ? <OpenAccountPage /> : activeId === 'spending' ? <TransactionEntryPage kind="spending" /> : activeId === 'payments' ? <TransactionEntryPage kind="payment" /> : activeId === 'deposit' ? <DepositEntryPage /> : activeId === 'employees' ? <EmployeesPage /> : activeId === 'growth' ? <CustomerGrowthPage /> : activeId === 'cities' ? <CustomerCitiesPage /> : activeId === 'limit-alerts' ? <LimitAlertsPage /> : activeId === 'freeze' ? <AccountFreezePage /> : activeId === 'credit' ? <CreditAccountsPage /> : activeId === 'top-deposits' ? <TopDepositsPage /> : activeId === 'daily-transactions' ? <TransactionDatePage /> : activeId === 'history' ? <TransactionHistoryPage /> : activeId === 'debt-report' ? <SpendingDebtPage /> : activeId === 'employee-income' ? <EmployeeIncomePage /> : activeId === 'employee-ranking' ? <EmployeeRankingPage /> : <FeaturePlaceholder item={activeItem} />}
           </div>
         </section>
       </div>

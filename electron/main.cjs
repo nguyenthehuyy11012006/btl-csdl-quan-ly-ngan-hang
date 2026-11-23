@@ -448,6 +448,24 @@ async function recordBankTransaction(_event, input = {}) {
   } finally { await connection.end().catch(() => {}) }
 }
 
+async function recordDeposit(_event, input = {}) {
+  const customerId = String(input.customerId || '').trim()
+  const employeeId = String(input.employeeId || '').trim()
+  const accountId = String(input.accountId || '').trim()
+  const amount = Number(input.amount)
+  if (!/^KH\d{3,7}$/.test(customerId) || !/^NV\d{3,7}$/.test(employeeId) || !/^TKG\d{1,9}$/.test(accountId)) throw new Error('Thông tin khách hàng, nhân viên hoặc tài khoản không hợp lệ.')
+  if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error('Số tiền phải là số nguyên dương.')
+  const connection = await mysql.createConnection(loadDatabaseConfig())
+  try {
+    await connection.query('CALL sp_GuiTien(?, ?, ?, ?, ?)', [customerId, employeeId, accountId, amount, null])
+    return { success: true, customerId, accountId, amount }
+  } catch (error) {
+    if (error && typeof error === 'object' && ['ER_SIGNAL_EXCEPTION', '1644'].includes(String(error.code || error.errno))) throw new Error(error.sqlMessage || error.message || 'Cơ sở dữ liệu từ chối giao dịch.')
+    if (error && typeof error === 'object' && ['ER_NO_REFERENCED_ROW_2', 'ER_CHECK_CONSTRAINT_VIOLATED'].includes(error.code)) throw new Error('Thông tin tài khoản hoặc giao dịch không thỏa ràng buộc dữ liệu.')
+    throw new Error('Không ghi được giao dịch gửi tiền. Hãy kiểm tra trạng thái tài khoản và kết nối MySQL.')
+  } finally { await connection.end().catch(() => {}) }
+}
+
 async function listEmployees() {
   return withReadConnection(async (connection) => {
     const [rows] = await connection.execute('SELECT MaNV, CMT, Ten, NgaySinh, DiaChi, BacNghe, ThamNien, ViTri FROM NhanVien ORDER BY MaNV')
@@ -614,6 +632,7 @@ app.whenReady().then(() => {
   ipcMain.handle('accounts:change-status', changeAccountStatus)
   ipcMain.handle('credit-accounts:list', listCreditAccounts)
   ipcMain.handle('deposits:top-customers', listTopDepositCustomers)
+  ipcMain.handle('deposits:record', recordDeposit)
   ipcMain.handle('transactions:by-date-range', getTransactionsByDateRange)
   ipcMain.handle('transactions:history', getTransactionHistory)
   ipcMain.handle('reports:spending-debt', getSpendingDebtReport)

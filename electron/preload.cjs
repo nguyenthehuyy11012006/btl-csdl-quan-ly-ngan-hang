@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('fhbank', {
   },
   deposits: {
     topCustomers: () => ipcRenderer.invoke('deposits:top-customers'),
+    record: (input) => ipcRenderer.invoke('deposits:record', input),
   },
   transactions: {
     entryOptions: () => ipcRenderer.invoke('transactions:entry-options'),
